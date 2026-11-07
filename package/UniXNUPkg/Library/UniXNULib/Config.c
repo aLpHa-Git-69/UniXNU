@@ -35,8 +35,14 @@
 STATIC CONST CHAR8  mBuiltinConfig[] =
   "version = 1\n"
   "[boot]\n"
+#ifdef LAVENDER_STAGE1
+  "timeout = -1\n"
+  "fallback_timeout = 86400\n"
+  "rotate = 0\n"
+#else
   "timeout = 10\n"
   "rotate = 2\n"
+#endif
   "[ui]\n"
   "title = \"UniXNU\"\n"
   "[[entry]]\n"

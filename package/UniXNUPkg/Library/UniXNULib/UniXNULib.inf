@@ -38,6 +38,7 @@
   DebugLib
   DevicePathLib
   FdtLib
+  HobLib
   MemoryAllocationLib
   PcdLib
   PrintLib

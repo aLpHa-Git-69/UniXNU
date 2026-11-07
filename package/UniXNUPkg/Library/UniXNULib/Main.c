@@ -9,6 +9,46 @@
 
 #include <Protocol/SerialIo.h>
 
+#ifdef LAVENDER_STAGE1
+#include <PiDxe.h>
+#include <Library/HobLib.h>
+
+STATIC CONST EFI_GUID mLavenderDiagnosticGuid = {
+  0x97C43BF7, 0xD25A, 0x4188, { 0xB0, 0x41, 0x61, 0x66, 0xB4, 0xB6, 0xE8, 0x11 }
+};
+
+STATIC
+VOID
+LavenderMenuDiagnostic (
+  IN OUT UNIXNU_UI  *Ui
+  )
+{
+  EFI_HOB_GUID_TYPE  *Hob;
+  CONST UINT8       *Data;
+
+  Hob = GetFirstGuidHob (&mLavenderDiagnosticGuid);
+  if ((Hob == NULL) || (GET_GUID_HOB_DATA_SIZE (Hob) != 56)) {
+    UnicodeSPrint (Ui->Notice, sizeof (Ui->Notice), L"LAVENDER: diagnostic HOB missing");
+    return;
+  }
+
+  // Wire layout is UINT64 arg, UINT32 status, UINT32 FDT size, two UINT64
+  // initrd bounds, then raw arg/SCTLR/PAR. Keep the common package
+  // independent of a SoC package.
+  Data = GET_GUID_HOB_DATA (Hob);
+  UnicodeSPrint (Ui->Notice, sizeof (Ui->Notice), L"H%u raw=0x%lx PA=0x%lx",
+                 ReadUnaligned32 ((CONST UINT32 *)(Data + 8)),
+                 ReadUnaligned64 ((CONST UINT64 *)(Data + 32)),
+                 ReadUnaligned64 ((CONST UINT64 *)Data));
+  UnicodeSPrint (Ui->Info, sizeof (Ui->Info), L"M%u FDT%u RD 0x%lx-0x%lx PAR0x%lx",
+                 (UINT32)(ReadUnaligned64 ((CONST UINT64 *)(Data + 40)) & 1),
+                 ReadUnaligned32 ((CONST UINT32 *)(Data + 12)),
+                 ReadUnaligned64 ((CONST UINT64 *)(Data + 16)),
+                 ReadUnaligned64 ((CONST UINT64 *)(Data + 24)),
+                 ReadUnaligned64 ((CONST UINT64 *)(Data + 48)));
+}
+#endif
+
 STATIC EFI_SERIAL_IO_PROTOCOL  *mSerial;
 
 VOID
@@ -117,6 +157,10 @@ UniXNURun (
     (UINT32)Config.KitsLoaded,
     (UINT32)Stats.AcpiInstalled
     );
+
+#ifdef LAVENDER_STAGE1
+  LavenderMenuDiagnostic (&Ui);
+#endif
 
   Countdown = TRUE;
   for ( ; ;) {
