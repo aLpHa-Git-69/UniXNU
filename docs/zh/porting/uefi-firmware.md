@@ -43,6 +43,12 @@ FdtLib|MdePkg/Library/BaseFdtLib/BaseFdtLib.inf
 
 `UniXNURamDiskDxe` 供使用 Mu-Silicium FDT 交接的设备共用，源码位于 UniXNU 的 `package/UniXNUPkg/Driver/UniXNURamDiskDxe/`。板级内存保留区和内存补充由固件平台维护。
 
+实验性固件启用 `WINDOWS_BUILD` 时，initrd 使用 UEFI 2.6 的
+`MEDIA_RAM_DISK_DP` 易失性磁盘设备路径。节点记录 FDT 给出的物理起点和
+包含在范围内的最后一个字节；Block I/O 仍为只读。这为 Windows 启动程序
+提供标准的内存磁盘标识。板级固件须在 DXE 分配内存前保留整个系统负载，
+并验证启动镜像大小。Windows 内核和设备驱动兼容性仍需实际板级启动验证。
+
 传入的 `.fd` 必须包含这些集成，并匹配设备的固件基址和大小。`./unixnu bootimg --fd <file>` 打包指定固件。修改 DSC、FDF 或驱动后，重新构建 FD。
 
 使用所选设备的输入构建负载，然后打包镜像：

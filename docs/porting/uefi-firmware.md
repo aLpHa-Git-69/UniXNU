@@ -43,6 +43,14 @@ Add `PartitionDxe` when the payload uses a partition table. The FAT driver also 
 
 `UniXNURamDiskDxe` is shared by devices using Mu-Silicium's FDT handoff. Its source is in UniXNU's `package/UniXNUPkg/Driver/UniXNURamDiskDxe/`. Board memory reservations and memory expansion remain in the firmware platform.
 
+An experimental firmware build with `WINDOWS_BUILD` publishes the initrd with
+the UEFI 2.6 `MEDIA_RAM_DISK_DP` volatile-disk device path. Its node records the
+physical start and inclusive end from the FDT; Block I/O remains read-only.
+This supplies a standard memory-disk identity to Windows boot applications.
+The board must reserve the full OS payload before DXE allocates memory and
+validate its boot-image size. Windows kernel/device-driver compatibility still
+requires a board-specific hardware boot test.
+
 A supplied `.fd` must contain this integration and match the board's firmware base and size. `./unixnu bootimg --fd <file>` packages the supplied firmware. Rebuild the FD after changing its DSC, FDF or drivers.
 
 Build the payload with the selected device's inputs, then pack the image:

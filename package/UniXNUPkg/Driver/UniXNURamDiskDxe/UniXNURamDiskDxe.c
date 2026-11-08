@@ -38,15 +38,30 @@ ReadCells (
 
 #pragma pack(1)
 typedef struct {
+#ifdef WINDOWS_BUILD
+  MEDIA_RAM_DISK_DEVICE_PATH  RamDisk;
+#else
   VENDOR_DEVICE_PATH          Vendor;
+#endif
   EFI_DEVICE_PATH_PROTOCOL    End;
 } RAM_BLOCK_DEVICE_PATH;
 #pragma pack()
 
 STATIC RAM_BLOCK_DEVICE_PATH  mDevicePath = {
   {
+#ifdef WINDOWS_BUILD
+    // Windows boot applications can identify the volatile memory disk through
+    // the standard UEFI 2.6 MEDIA_RAM_DISK_DP node, including its physical span.
+    { MEDIA_DEVICE_PATH, MEDIA_RAM_DISK_DP,
+      { (UINT8)sizeof (MEDIA_RAM_DISK_DEVICE_PATH), (UINT8)(sizeof (MEDIA_RAM_DISK_DEVICE_PATH) >> 8) } },
+    { 0, 0 },
+    { 0, 0 },
+    EFI_VIRTUAL_DISK_GUID,
+    0
+#else
     { HARDWARE_DEVICE_PATH, HW_VENDOR_DP, { (UINT8)sizeof (VENDOR_DEVICE_PATH), (UINT8)(sizeof (VENDOR_DEVICE_PATH) >> 8) } },
     { 0xA9C6827C, 0x1BD8, 0x410C, { 0x88, 0x5A, 0xC4, 0x65, 0x00, 0xF7, 0xD8, 0x36 } }
+#endif
   },
   { END_DEVICE_PATH_TYPE, END_ENTIRE_DEVICE_PATH_SUBTYPE, { sizeof (EFI_DEVICE_PATH_PROTOCOL), 0 } }
 };
@@ -180,6 +195,10 @@ PublishInitrd (
     End = Start + Rounded;
   }
 
+#ifdef WINDOWS_BUILD
+  WriteUnaligned64 ((UINT64 *)mDevicePath.RamDisk.StartingAddr, Start);
+  WriteUnaligned64 ((UINT64 *)mDevicePath.RamDisk.EndingAddr, End - 1);
+#endif
   mRamBase                = (UINT8 *)(UINTN)Start;
   mMedia.MediaId          = 1;
   mMedia.RemovableMedia   = FALSE;
